@@ -44,6 +44,8 @@ class Wallet {
   public privateKey: string;
 
   constructor() {
+    //GENTERATES A PRIVATEKEY-PUBLICKEY PAIR USING THE rsa
+    //INCRIPTATION
     const keyPair = crypto.generateKeyPairSync("rsa", {
       modulusLength: 2048,
       publicKeyEncoding: { type: "spki", format: "pem" },
@@ -54,6 +56,7 @@ class Wallet {
     this.publicKey = keyPair.publicKey.toString();
   }
 
+  //SENDS MONEY FROM ONDE WALLET TO THE OTHER
   sendMoney(amount: number, receiverPublicKey: string) {
     const transaction = new Transaction(
       amount,
@@ -64,6 +67,7 @@ class Wallet {
     const sign = crypto.createSign("SHA256");
     sign.update(transaction.toString()).end();
 
+    //CREATING A SIGNATURE USING SHA256
     const signature = sign.sign(this.privateKey);
     Chain.instance.addBlock(transaction, this.publicKey, signature);
   }
@@ -74,6 +78,7 @@ class Chain {
   //INSTANCE OF A CHAIN BEFORE ANYTHING ELSE
   public static instance = new Chain();
 
+  //CRAETING A CHAIN AS AN ARRAY OF BLOCKS
   chain = new Array() as Block[];
 
   constructor() {
@@ -90,11 +95,14 @@ class Chain {
     senderPublicKey: string,
     signature: Buffer
   ) {
+    //CREATES A VERIFIER FOR SHA256
     const verifier = crypto.createVerify("SHA256");
     verifier.update(transaction.toString());
 
+    //VALIDATES THE TOKEN USING CRYPTO'S VERIFY
     const isValid = verifier.verify(senderPublicKey, signature);
 
+    //IF TRUE, MINES THE NEW BLOCK AND THEN PUSHES IT TO THE CHAIN
     if (isValid) {
       const newBlock = new Block(this.lastBlock.hash, transaction);
       this.mine(newBlock.nonce);
@@ -102,10 +110,13 @@ class Chain {
     }
   }
 
+  //ATTEMPTS TO CREATE A HASH THAT MATCHES THE DIFFICULTY
+  //USING 4 ZEROS STATICALLY AS AN EXAMPLE 
   mine(nonce: number) {
     let solution = 1;
     console.log("mining...");
 
+    //REPEATS ATTEMPT UNTIL SUCCESS
     while (true) {
       const hash = crypto.createHash("MD5");
       hash.update((nonce + solution).toString()).end();
@@ -122,6 +133,8 @@ class Chain {
   }
 }
 
+
+//EXAMPLE CASE
 const satoshi = new Wallet();
 const bob = new Wallet();
 const alice = new Wallet();
